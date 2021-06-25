@@ -9,6 +9,7 @@ import type {
   GeneratedSources
 } from "@truffle/contract-schema/spec";
 import type * as Common from "@truffle/compile-common";
+import { Shims } from "@truffle/compile-common";
 import * as Format from "@truffle/codec/format";
 import type {
   Compilation,
@@ -67,6 +68,11 @@ interface CompilationOptions {
   sources?: Common.Source[];
   shimmedCompilationId?: string;
   compiler?: Compiler.CompilerVersion;
+}
+
+interface CompilationAndContract {
+  compilation: Compilation;
+  contract: Contract;
 }
 
 /**
@@ -546,6 +552,60 @@ export function collectUserDefinedTypesAndTaggedOutputs(
     typesByCompilation: types,
     types: Format.Types.forgetCompilations(types)
   };
+}
+
+/**
+ * Given a list of compilations, and an artifact appearing in one
+ * of those compilations, finds the compilation and the corresponding
+ * contract object
+ * (these may be undefined if they can't be found)
+ */
+export function findCompilationAndContract(
+  compilations: Compilation[],
+  artifact: Artifact
+): CompilationAndContract {
+  const deployedBytecode = Shims.NewToLegacy.forBytecode(
+    artifact.deployedBytecode
+  );
+  const bytecode = Shims.NewToLegacy.forBytecode(artifact.bytecode);
+
+  return compilations.reduce(
+    (foundSoFar: CompilationAndContract, compilation) => {
+      if (foundSoFar) {
+        return foundSoFar;
+      }
+      const contractFound = compilation.contracts.find(contract => {
+        if (bytecode) {
+          return (
+            Shims.NewToLegacy.forBytecode(contract.bytecode) === bytecode &&
+            contract.contractName ===
+              (artifact.contractName || <string>artifact.contract_name)
+          );
+        } else if (deployedBytecode) {
+          //I'll just go by one of bytecode or deployedBytecode;
+          //no real need to check both
+          return (
+            Shims.NewToLegacy.forBytecode(contract.deployedBytecode) ===
+              deployedBytecode &&
+            contract.contractName ===
+              (artifact.contractName || <string>artifact.contract_name)
+          );
+        } else {
+          //WARNING: better hope we don't end up here!
+          return (
+            contract.contractName ===
+            (artifact.contractName || <string>artifact.contract_name)
+          );
+        }
+      });
+      if (contractFound) {
+        return { compilation, contract: contractFound };
+      } else {
+        return undefined;
+      }
+    },
+    undefined
+  );
 }
 
 function projectInfoIsCodecStyle(
