@@ -12,6 +12,9 @@
     "solc-bump": "node ./scripts/solc-bump.js",
     "update": "lernaupdate"
   },
+  "resolutions": {
+    "@hapi/hapi": "^20.2.0"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.2.0",
     "@typescript-eslint/parser": "^4.2.0",
