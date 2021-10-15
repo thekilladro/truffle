@@ -1,4 +1,5 @@
 import type { Provider } from "web3/providers";
+import type { Eip1193Provider } from "./adapter";
 import type { ContractObject as Artifact } from "@truffle/contract-schema/spec";
 import type { Compilations, Format, Evm } from "@truffle/codec";
 import type * as Codec from "@truffle/codec";
@@ -48,7 +49,7 @@ export interface EncoderInfoInternal {
   allocations?: Evm.AllocationInfo;
   compilations?: Compilations.Compilation[];
   networkId?: number | null;
-  provider?: Provider | null;
+  provider?: Provider | Eip1193Provider | null;
   registryAddress?: string;
 }
 
@@ -85,7 +86,7 @@ export interface EncoderSettings {
    * Including this will also turn on ENS resolution unless it is turned off in
    * the ENS settings (see below).
    */
-  provider?: Provider;
+  provider?: Provider | Eip1193Provider;
   /**
    * Optionally include a network ID; this is used for the same purposes as the
    * provider (see above), but won't turn on ENS resolution.
@@ -116,7 +117,7 @@ export interface EnsSettings {
    * ENS resolution.  If absent, will default to the encoders's usual provider,
    * if there is one, or to `null`, if not.
    */
-  provider?: Provider | null;
+  provider?: Provider | Eip1193Provider | null;
   /**
    * The ENS registry address to use; if absent, will use the default one
    * for the current network.  If there is no default registry for the

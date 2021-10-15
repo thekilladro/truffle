@@ -8,8 +8,8 @@ import * as Abi from "@truffle/abi-utils";
 import * as Types from "./types";
 import Big from "big.js";
 import type { Provider } from "web3/providers";
-import Web3 from "web3";
 import Web3Utils from "web3-utils";
+import { ProviderAdapter, Eip1193Provider } from "./adapter";
 import * as Utils from "./utils";
 import {
   NoInternalInfoError,
@@ -39,7 +39,7 @@ interface ENSCache {
  * @category Encoder
  */
 export class ProjectEncoder {
-  private provider: Provider | null;
+  private provider: Provider | Eip1193Provider | null;
   private ens: any | null; //any should be ENS, sorry >_>
   private registryAddress: string | undefined = undefined;
   private ensCache: ENSCache = {};
@@ -135,7 +135,7 @@ export class ProjectEncoder {
         //but what is that?  We have to look it up.
         //NOTE: ENS is supposed to do this for us in the constructor,
         //but due to a bug it doesn't.
-        const networkId = await new Web3(this.provider).eth.net.getId();
+        const networkId = await new ProviderAdapter(this.provider).getNetworkId();
         const registryAddress: string | undefined = getEnsAddress(networkId);
         if (registryAddress) {
           this.ens = new ENS({
