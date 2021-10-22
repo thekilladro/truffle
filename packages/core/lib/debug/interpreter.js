@@ -579,7 +579,33 @@ class DebugInterpreter {
           );
           break;
         }
-        await this.printer.printVariables();
+
+        //first: process which variables we should print out
+        let tempPrintouts = new Set();
+        for (let argument of splitArgs) {
+          let fullVariable;
+          if (argument[0] === "+" || argument[0] === "-") {
+            fullVariable = argument.slice(1);
+          } else {
+            fullVariable = argument;
+          }
+          let variable = this.printer.variables.find(possibleVariable =>
+            fullVariable.startsWith(possibleVariable)
+          );
+          if (argument[0] === "+") {
+            this.printer.varPrintouts.add(variable);
+          } else if (argument[0] === "-") {
+            this.printer.varPrintouts.delete(variable);
+          } else {
+            tempPrintouts.add(variable);
+          }
+        }
+        for (let variable of this.printer.varPrintouts) {
+          debug("variable: %s", variable);
+          tempPrintouts.add(variable);
+        }
+
+        await this.printer.printVariables(tempPrintouts);
         if (this.session.view(trace.finished)) {
           await this.printer.printReturnValue();
         }

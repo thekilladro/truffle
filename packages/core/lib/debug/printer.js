@@ -59,6 +59,9 @@ class DebugPrinter {
 
     this.printouts = new Set(["sta"]);
     this.locations = ["sto", "cal", "mem", "sta"]; //should remain constant
+
+    this.varPrintouts = new Set(["bui", "loc", "con"]);
+    this.variables = ["bui", "loc", "con"]; //should remain constant
   }
 
   print(...args) {
@@ -580,7 +583,7 @@ class DebugPrinter {
     }
   }
 
-  async printVariables() {
+  async printVariables(varOuts = this.varPrintouts) {
     const values = await this.session.variables();
     const sections = this.session.view(data.current.identifiers.sections);
 
@@ -594,22 +597,31 @@ class DebugPrinter {
     this.config.logger.log();
 
     for (const [section, variables] of Object.entries(sections)) {
-      if (variables.length > 0) {
-        this.config.logger.log(sectionNames[section] + ":");
-        // Get the length of the longest name.
-        const longestNameLength = variables.reduce((longest, name) => {
-          return name.length > longest ? name.length : longest;
-        }, -Infinity);
-        for (const variable of variables) {
-          const paddedName = variable.padStart(longestNameLength) + ":";
-          const value = values[variable];
-          const formatted = DebugUtils.formatValue(
-            value,
-            longestNameLength + 5
-          );
-          this.config.logger.log("  " + paddedName, formatted);
+      let vPrintout = 0;
+      for (const v of varOuts) {
+          if (section.includes(v)) {
+            vPrintout = 1;
+            break;
+          }
+      }
+      if ( vPrintout === 1 ) {
+        if (variables.length > 0) {
+          this.config.logger.log(sectionNames[section] + ":");
+          // Get the length of the longest name.
+          const longestNameLength = variables.reduce((longest, name) => {
+            return name.length > longest ? name.length : longest;
+          }, -Infinity);
+          for (const variable of variables) {
+            const paddedName = variable.padStart(longestNameLength) + ":";
+            const value = values[variable];
+            const formatted = DebugUtils.formatValue(
+              value,
+              longestNameLength + 5
+            );
+            this.config.logger.log("  " + paddedName, formatted);
+          }
+          this.config.logger.log();
         }
-        this.config.logger.log();
       }
     }
   }
